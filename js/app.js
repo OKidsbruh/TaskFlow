@@ -32,6 +32,13 @@ function readJson(key, fallback) {
 }
 const extraSettings = readJson(SETTINGS_KEY, {});
 extraSettings.language = getLanguage();
+// Вибір теми й акценту, зроблений раніше, теж вважаємо частиною налаштувань (для синхронізації).
+{
+  const storedTheme = localStorage.getItem("taskflow-theme");
+  const storedAccent = localStorage.getItem("taskflow-accent");
+  if (!extraSettings.theme && ["light", "dark", "system"].includes(storedTheme)) extraSettings.theme = storedTheme;
+  if (!extraSettings.accent && storedAccent) extraSettings.accent = storedAccent;
+}
 let taskTrash = readJson(TRASH_KEY, []);
 let quickNotes = readJson(NOTES_KEY, []);
 let currentPage = "dashboard";
@@ -1586,7 +1593,14 @@ document.addEventListener("keydown", event => {
 });
 
 // Перемикання світлої та темної теми з її збереженням.
-function applyTheme(theme) {
+// Збережена тема: якщо користувач ще нічого не обирав, слідуємо системній.
+function getStoredTheme() {
+  const stored = localStorage.getItem(THEME_KEY);
+  return ["light", "dark", "system"].includes(stored) ? stored : "system";
+}
+
+// persist: false — лише показати тему (старт, мова, дані з хмари), нічого не записуючи.
+function applyTheme(theme, { persist = true } = {}) {
   const resolvedTheme = theme === "system"
     ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
     : theme;
@@ -1596,12 +1610,18 @@ function applyTheme(theme) {
     ? '<i data-lucide="sun"></i>'
     : '<i data-lucide="moon"></i>';
   themeButton.setAttribute("aria-label", resolvedTheme === "dark" ? t("Увімкнути світлу тему") : t("Увімкнути темну тему"));
-  localStorage.setItem(THEME_KEY, theme);
+  if (persist) {
+    // Тема потрапляє і в браузер (швидкий старт), і в хмарні налаштування (інші пристрої).
+    localStorage.setItem(THEME_KEY, theme);
+    extraSettings.theme = theme;
+    saveExtraSettings();
+  }
+  const select = document.querySelector("#settings-theme");
+  if (select) select.value = theme;
   refreshIcons();
 }
 
-const savedTheme = localStorage.getItem(THEME_KEY) || "light";
-applyTheme(savedTheme);
+applyTheme(getStoredTheme(), { persist: false });
 
 document.querySelector("#theme-toggle").addEventListener("click", () => {
   const newTheme = document.body.classList.contains("dark-theme") ? "light" : "dark";
@@ -1691,7 +1711,7 @@ window.applyFirebaseProfile = function (user) {
 };
 
 function renderSettings() {
-  document.querySelector("#settings-theme").value = localStorage.getItem(THEME_KEY) || "light";
+  document.querySelector("#settings-theme").value = getStoredTheme();
   document.querySelector("#settings-language").value = getLanguage();
   document.querySelector("#setting-focus-minutes").value = pomodoroSettings.focus;
   document.querySelector("#setting-short-minutes").value = pomodoroSettings.short;
@@ -2210,6 +2230,16 @@ window.applyTaskFlowCloudData = function (cloudData) {
     Object.assign(extraSettings, cloudData.extraSettings);
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(extraSettings));
     syncExtraSettingsUI();
+    // Тема й акцентний колір з хмари (без повторного запису).
+    if (["light", "dark", "system"].includes(extraSettings.theme)) {
+      localStorage.setItem(THEME_KEY, extraSettings.theme);
+      applyTheme(extraSettings.theme, { persist: false });
+    }
+    if (extraSettings.accent) {
+      localStorage.setItem("taskflow-accent", extraSettings.accent);
+      applyAccent(extraSettings.accent);
+      if (accentInput) accentInput.value = extraSettings.accent;
+    }
     // Мову з хмари застосовуємо без сповіщення, лише якщо вона відрізняється від поточної.
     if (extraSettings.language && extraSettings.language !== getLanguage()) {
       applyLanguage(extraSettings.language, { silent: true });
@@ -2257,7 +2287,7 @@ function adjustHex(hex, amount) {
   const b = Math.max(0, Math.min(255, (value & 255) + amount));
   return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, "0")}`;
 }
-function applyAccent(color) {
+function applyAccent(color, { persist = false } = {}) {
   if (!/^#[0-9a-f]{6}$/i.test(color)) return;
   // Встановлюємо змінні на body, щоб акцент не перезаписувався темною темою.
   document.body.style.setProperty("--primary", color);
@@ -2265,7 +2295,11 @@ function applyAccent(color) {
   document.body.style.setProperty("--primary-color", color);
   document.body.style.setProperty("--accent-dark", adjustHex(color, -18));
   document.body.style.setProperty("--accent-soft", `${color}20`);
-  localStorage.setItem("taskflow-accent", color);
+  if (persist) {
+    localStorage.setItem("taskflow-accent", color);
+    extraSettings.accent = color;
+    saveExtraSettings();
+  }
 }
 const accentInput = document.querySelector("#settings-accent");
 const languageInput = document.querySelector("#settings-language");
@@ -2273,10 +2307,12 @@ const themeSelect = document.querySelector("#settings-theme");
 if (accentInput) {
   accentInput.value = localStorage.getItem("taskflow-accent") || "#7667f8";
   applyAccent(accentInput.value);
+  // Під час вибору кольору показуємо його одразу, а зберігаємо, коли вибір завершено.
   accentInput.addEventListener("input", () => applyAccent(accentInput.value));
+  accentInput.addEventListener("change", () => applyAccent(accentInput.value, { persist: true }));
 }
 if (themeSelect) {
-  themeSelect.value = localStorage.getItem(THEME_KEY) || "light";
+  themeSelect.value = getStoredTheme();
   themeSelect.addEventListener("change", () => applyTheme(themeSelect.value));
 }
 if (languageInput) {
@@ -2284,7 +2320,7 @@ if (languageInput) {
   languageInput.addEventListener("change", () => applyLanguage(languageInput.value));
 }
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-  if ((localStorage.getItem(THEME_KEY) || "light") === "system") applyTheme("system");
+  if (getStoredTheme() === "system") applyTheme("system", { persist: false });
 });
 const browserNotify = document.querySelector("#setting-browser-notifications");
 const soundNotify = document.querySelector("#setting-notification-sound");
@@ -2545,8 +2581,7 @@ function applyLanguage(language, { silent = false } = {}) {
   renderQuickNotes();
   renderTrash();
   resetCategoryFormLabels();
-  const theme = localStorage.getItem(THEME_KEY) || "light";
-  applyTheme(theme); // Оновлює підпис кнопки теми.
+  applyTheme(getStoredTheme(), { persist: false }); // Оновлює підпис кнопки теми.
   if (languageInput) languageInput.value = getLanguage();
   document.dispatchEvent(new CustomEvent("taskflow-language", { detail: getLanguage() }));
 
