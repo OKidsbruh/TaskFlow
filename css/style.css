@@ -482,6 +482,7 @@ h1, h2, p { margin-top: 0; }
 .tasks-empty.visible { display: flex; }
 .tasks-empty strong { font-size: 12px; }
 .tasks-empty p { margin: 7px 0 0; color: var(--text-faint); font-size: 10px; }
+.tasks-empty .secondary-button { min-height: 34px; margin-top: 13px; font-size: 10px; }
 
 @media (max-width: 900px) {
   .tasks-toolbar { grid-template-columns: 1fr 1fr; }

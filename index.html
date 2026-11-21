@@ -173,9 +173,9 @@
             <!-- Список завдань створюється JavaScript -->
           </div>
           <div class="empty-state" id="empty-state">
-            <span class="empty-icon"><i data-lucide="coffee"></i></span>
-            <strong>На сьогодні завдань немає</strong>
-            <p>Можеш відпочити або додати нове завдання.</p>
+            <span class="empty-icon"><i data-lucide="plus"></i></span>
+            <strong id="today-empty-title">Завдань ще немає</strong>
+            <p id="today-empty-text">Додай перше завдання — і воно з’явиться тут.</p>
             <button class="secondary-button" id="empty-add-button"><i data-lucide="plus"></i> Додати завдання</button>
           </div>
         </section>
@@ -227,9 +227,10 @@
             </div>
             <div class="task-list all-task-list" id="all-task-list"></div>
             <div class="tasks-empty" id="tasks-empty">
-              <span class="empty-icon"><i data-lucide="search-x"></i></span>
-              <strong>Завдань не знайдено</strong>
-              <p>Спробуй змінити фільтри або створи нове завдання.</p>
+              <span class="empty-icon"><i data-lucide="plus" id="tasks-empty-icon"></i></span>
+              <strong id="tasks-empty-title">Завдань ще немає</strong>
+              <p id="tasks-empty-text">Додай перше завдання — і воно з’явиться тут.</p>
+              <button class="secondary-button" id="tasks-empty-add" type="button"><i data-lucide="plus"></i> Додати завдання</button>
             </div>
           </section>
         </section>

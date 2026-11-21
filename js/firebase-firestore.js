@@ -87,6 +87,12 @@ onAuthStateChanged(auth, async user => {
       if (!snapshot.exists() || auth.currentUser?.uid !== user.uid) return;
       window.applyTaskFlowCloudData?.(snapshot.data());
       window.taskFlowCloudReady = true;
+      if (window.taskFlowPendingCloudSave) {
+        window.taskFlowPendingCloudSave = false;
+        window.taskFlowCloud.saveCloudData(window.getTaskFlowCloudData()).catch(error => {
+          console.error("Не вдалося прибрати початкові завдання з хмари:", error);
+        });
+      }
     }, error => {
       console.error("Firestore listener:", error);
       window.showToast?.(t("Втрачено зв’язок із хмарою. Локальні зміни залишаються у браузері; перевір інтернет."));

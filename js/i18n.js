@@ -82,6 +82,8 @@ const TASKFLOW_EN = {
   "Тримай важливе під контролем": "Keep what matters under control",
   "На сьогодні завдань немає": "No tasks for today",
   "Можеш відпочити або додати нове завдання.": "You can take a break or add a new task.",
+  "Завдань ще немає": "No tasks yet",
+  "Додай перше завдання — і воно з’явиться тут.": "Add your first task and it will show up here.",
   "Додати завдання": "Add task",
 
   // ----- Список завдань -----

@@ -127,49 +127,6 @@ function getToday() {
   return `${year}-${month}-${day}`;
 }
 
-// Створюємо початкові демонстраційні завдання, якщо список порожній.
-function createDemoTasks() {
-  const today = getToday();
-  return [
-    {
-      id: crypto.randomUUID(),
-      title: "Підготувати матеріали до навчання",
-      description: "Переглянути конспект та повторити основні теми",
-      demo: true,
-      date: today,
-      time: "10:00",
-      category: "Навчання",
-      priority: "high",
-      status: "planned",
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: crypto.randomUUID(),
-      title: "Попрацювати над власним проєктом",
-      description: "Продовжити розробку інтерфейсу TaskFlow",
-      demo: true,
-      date: today,
-      time: "14:30",
-      category: "Особисте",
-      priority: "medium",
-      status: "in-progress",
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: crypto.randomUUID(),
-      title: "Скласти план на наступний тиждень",
-      demo: true,
-      description: "",
-      date: today,
-      time: "",
-      category: "Особисте",
-      priority: "low",
-      status: "planned",
-      createdAt: new Date().toISOString()
-    }
-  ];
-}
-
 const TASK_STATUSES = ["planned", "in-progress", "review", "completed"];
 
 // Приводимо завдання до єдиного формату (старі записи мали підзавдання як рядки).
@@ -187,25 +144,23 @@ function normalizeTask(task) {
   };
 }
 
-// Завантажуємо завдання з LocalStorage.
-// Якщо даних ще немає, додаємо демонстраційні завдання.
+// Завантажуємо завдання з LocalStorage. Новий простір починається порожнім.
+// Старі демонстраційні завдання (demo: true) прибираємо — їх ніхто не створював сам.
 function loadTasks() {
   const savedTasks = localStorage.getItem(TASKS_KEY);
+  if (savedTasks === null) return [];
 
-  if (savedTasks !== null) {
-    try {
-      const parsedTasks = JSON.parse(savedTasks);
-      // Перевіряємо старі записи, щоб новий статус працював із попередніми даними.
-      return parsedTasks.map(normalizeTask);
-    } catch (error) {
-      console.error("Не вдалося прочитати завдання:", error);
-      return [];
+  try {
+    const parsedTasks = JSON.parse(savedTasks);
+    const loaded = parsedTasks.map(normalizeTask).filter(task => !task.demo);
+    if (loaded.length !== parsedTasks.length) {
+      localStorage.setItem(TASKS_KEY, JSON.stringify(loaded));
     }
+    return loaded;
+  } catch (error) {
+    console.error("Не вдалося прочитати завдання:", error);
+    return [];
   }
-
-  const demoTasks = createDemoTasks();
-  localStorage.setItem(TASKS_KEY, JSON.stringify(demoTasks));
-  return demoTasks;
 }
 
 let tasks = loadTasks();
@@ -499,6 +454,15 @@ function renderTodayTasks() {
   elements.todayList.innerHTML = "";
   elements.todayCount.textContent = todayTasks.length;
   elements.emptyState.classList.toggle("visible", todayTasks.length === 0);
+  const todayEmptyTitle = document.querySelector("#today-empty-title");
+  const todayEmptyText = document.querySelector("#today-empty-text");
+  if (tasks.length === 0) {
+    todayEmptyTitle.textContent = t("Завдань ще немає");
+    todayEmptyText.textContent = t("Додай перше завдання — і воно з’явиться тут.");
+  } else {
+    todayEmptyTitle.textContent = t("На сьогодні завдань немає");
+    todayEmptyText.textContent = t("Можеш відпочити або додати нове завдання.");
+  }
 
   todayTasks.forEach(task => {
     elements.todayList.appendChild(createTaskElement(task, { showDate: false }));
@@ -536,6 +500,21 @@ function renderAllTasks() {
   elements.allTasksCount.textContent = filteredTasks.length;
   elements.allTasksSubtitle.textContent = t("Показано: {shown} із {total}", { shown: filteredTasks.length, total: tasks.length });
   elements.tasksEmpty.classList.toggle("visible", filteredTasks.length === 0);
+  const tasksEmptyTitle = document.querySelector("#tasks-empty-title");
+  const tasksEmptyText = document.querySelector("#tasks-empty-text");
+  const tasksEmptyAdd = document.querySelector("#tasks-empty-add");
+  const tasksEmptyIcon = document.querySelector("#tasks-empty-icon");
+  if (tasks.length === 0) {
+    tasksEmptyTitle.textContent = t("Завдань ще немає");
+    tasksEmptyText.textContent = t("Додай перше завдання — і воно з’явиться тут.");
+    tasksEmptyAdd.hidden = false;
+    tasksEmptyIcon.setAttribute("data-lucide", "plus");
+  } else {
+    tasksEmptyTitle.textContent = t("Завдань не знайдено");
+    tasksEmptyText.textContent = t("Спробуй змінити фільтри або створи нове завдання.");
+    tasksEmptyAdd.hidden = true;
+    tasksEmptyIcon.setAttribute("data-lucide", "search-x");
+  }
 
   filteredTasks.forEach(task => {
     elements.allTaskList.appendChild(createTaskElement(task));
@@ -1593,6 +1572,7 @@ function showToast(message) {
 // Підключаємо всі кнопки, які відкривають модальне вікно.
 document.querySelector("#new-task-button").addEventListener("click", openCreateModal);
 document.querySelector("#empty-add-button").addEventListener("click", openCreateModal);
+document.querySelector("#tasks-empty-add").addEventListener("click", openCreateModal);
 document.querySelector("#close-modal-button").addEventListener("click", closeModal);
 document.querySelector("#cancel-modal-button").addEventListener("click", closeModal);
 
@@ -2176,7 +2156,9 @@ function scheduleTaskFlowCloudSave() {
 // Цю функцію викликає firebase-firestore.js після завантаження документа.
 window.applyTaskFlowCloudData = function (cloudData) {
   if (Array.isArray(cloudData.tasks)) {
-    tasks = cloudData.tasks.map(normalizeTask);
+    const loaded = cloudData.tasks.map(normalizeTask).filter(task => !task.demo);
+    if (loaded.length !== cloudData.tasks.length) window.taskFlowPendingCloudSave = true;
+    tasks = loaded;
     localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
   }
 
