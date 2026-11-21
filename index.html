@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="TaskFlow — простір для планування завдань і керування продуктивністю.">
+  <title>TaskFlow — Dashboard</title>
+
+  <!-- Підключення шрифтів Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Іконки Lucide через CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Основні стилі -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Бічна панель навігації -->
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="index.html" aria-label="TaskFlow — головна">
+        <span class="brand-mark"><i data-lucide="check-check"></i></span>
+        <span>Task<span class="brand-accent">Flow</span></span>
+      </a>
+
+      <div class="sidebar-scroll" id="sidebar-scroll">
+      <div class="sidebar-label">WORKSPACE</div>
+      <nav class="main-nav" aria-label="Головна навігація">
+        <a class="nav-link active" href="#dashboard" data-page="dashboard"><i data-lucide="layout-dashboard"></i><span>Огляд</span></a>
+        <a class="nav-link" href="#tasks" data-page="tasks"><i data-lucide="list-todo"></i><span>Мої завдання</span><span class="nav-count" id="nav-task-count">0</span></a>
+        <a class="nav-link" href="#calendar" data-page="calendar"><i data-lucide="calendar-days"></i><span>Календар</span></a>
+        <a class="nav-link" href="#kanban" data-page="kanban"><i data-lucide="kanban-square"></i><span>Kanban</span></a>
+      </nav>
+
+      <div class="sidebar-label sidebar-label-spaced">ANALYZE</div>
+      <nav class="main-nav" aria-label="Аналітика">
+        <a class="nav-link" href="#statistics" data-page="statistics"><i data-lucide="chart-no-axes-combined"></i><span>Статистика</span></a>
+        <a class="nav-link" href="#pomodoro" data-page="pomodoro"><i data-lucide="timer"></i><span>Pomodoro</span></a>
+      </nav>
+
+      <div class="sidebar-label sidebar-label-spaced">PERSONAL</div>
+      <nav class="main-nav" aria-label="Особисті розділи">
+        <a class="nav-link" href="#categories" data-page="categories"><i data-lucide="tags"></i><span>Категорії</span></a>
+        <a class="nav-link" href="#profile" data-page="profile"><i data-lucide="user-round"></i><span>Мій профіль</span></a>
+        <a class="nav-link" href="#settings" data-page="settings"><i data-lucide="settings-2"></i><span>Налаштування</span></a>
+        <button class="nav-link nav-trash-button" id="sidebar-trash-button" type="button"><i data-lucide="trash-2"></i><span>Кошик</span><span class="nav-count" id="sidebar-trash-count">0</span></button>
+      </nav>
+
+      </div><!-- /.sidebar-scroll -->
+
+      <div class="sidebar-bottom">
+        <div class="upgrade-card">
+          <div class="upgrade-icon"><i data-lucide="sparkles"></i></div>
+          <strong>Працюй зосереджено</strong>
+          <p>Маленькі кроки створюють великі результати.</p>
+          <span class="upgrade-decoration">✦</span>
+        </div>
+        <button class="profile-mini" id="profile-button" type="button">
+          <span class="avatar">О</span>
+          <span class="profile-mini-info"><strong id="sidebar-user-name">Олександр</strong><small>Особистий простір</small></span>
+          <i data-lucide="ellipsis"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Основна частина сторінки -->
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-button mobile-menu-button" id="mobile-menu-button" aria-label="Відкрити меню"><i data-lucide="menu"></i></button>
+          <div class="breadcrumb"><span>Workspace</span><i data-lucide="chevron-right"></i><strong id="breadcrumb-current">Огляд</strong></div>
+        </div>
+        <div class="topbar-actions">
+          <div class="today-date"><i data-lucide="calendar"></i><span id="header-date"></span></div>
+          <div class="notification-wrapper">
+            <button class="icon-button notification-button" id="notification-button" type="button" aria-label="Сповіщення" aria-expanded="false" aria-controls="notification-panel">
+              <i data-lucide="bell"></i><span class="notification-count" id="notification-count" hidden>0</span>
+            </button>
+            <section class="notification-panel" id="notification-panel" hidden aria-label="Центр сповіщень">
+              <div class="notification-panel-header">
+                <div><h2>Сповіщення</h2><p id="notification-summary">Усе під контролем</p></div>
+                <button class="notification-text-button" id="mark-all-notifications-read" type="button">Прочитати всі</button>
+              </div>
+              <div class="notification-list" id="notification-list"></div>
+              <div class="notification-empty" id="notification-empty">
+                <i data-lucide="bell-ring"></i>
+                <strong>Поки немає сповіщень</strong>
+                <span>Тут з’являтимуться нагадування про дедлайни.</span>
+              </div>
+              <div class="notification-panel-footer">
+                <button class="notification-permission-button" id="enable-browser-notifications" type="button"><i data-lucide="monitor"></i> Увімкнути системні сповіщення</button>
+              </div>
+            </section>
+          </div>
+          <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Перемкнути тему"><i data-lucide="moon"></i></button>
+          <button class="top-avatar" id="top-avatar" aria-label="Профіль">О</button>
+        </div>
+      </header>
+
+      <div class="dashboard-container">
+        <div id="dashboard-page">
+        <!-- Заголовок Dashboard -->
+        <section class="welcome-row">
+          <div>
+            <p class="eyebrow" id="welcome-eyebrow">ТВІЙ ПРОСТІР ПРОДУКТИВНОСТІ</p>
+            <h1><span id="welcome-greeting">Доброго дня,</span> <span id="welcome-name">Олександр</span> <span class="wave">✦</span></h1>
+            <p class="welcome-subtitle">Ось що відбувається з твоїми завданнями сьогодні.</p>
+          </div>
+          <button class="primary-button" id="new-task-button"><i data-lucide="plus"></i> Нове завдання</button>
+        </section>
+
+        <!-- Картки з основними показниками -->
+        <section class="stats-grid" aria-label="Статистика завдань">
+          <article class="stat-card">
+            <div class="stat-card-top"><span class="stat-icon purple"><i data-lucide="layers-3"></i></span><span class="stat-caption">Усі завдання</span></div>
+            <div class="stat-value" id="total-tasks">0</div>
+            <div class="stat-foot"><span class="stat-neutral"><i data-lucide="activity"></i> Загалом у просторі</span></div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-card-top"><span class="stat-icon green"><i data-lucide="check-circle-2"></i></span><span class="stat-caption">Виконано</span></div>
+            <div class="stat-value" id="completed-tasks">0</div>
+            <div class="stat-foot"><span class="stat-positive"><i data-lucide="trending-up"></i> Чудова робота!</span></div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-card-top"><span class="stat-icon blue"><i data-lucide="clock-3"></i></span><span class="stat-caption">У процесі</span></div>
+            <div class="stat-value" id="active-tasks">0</div>
+            <div class="stat-foot"><span class="stat-neutral">Заплановано або виконується</span></div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-card-top"><span class="stat-icon orange"><i data-lucide="alert-circle"></i></span><span class="stat-caption">Прострочено</span></div>
+            <div class="stat-value" id="overdue-tasks">0</div>
+            <div class="stat-foot"><span class="stat-warning">Потребують уваги</span></div>
+          </article>
+        </section>
+
+        <!-- Прогрес і коротка інформація -->
+        <section class="overview-grid">
+          <article class="panel progress-panel">
+            <div class="panel-heading">
+              <div><h2>Твій прогрес</h2><p>Загальний огляд виконання</p></div>
+              <span class="period-pill"><i data-lucide="calendar-range"></i> За весь час</span>
+            </div>
+            <div class="progress-content">
+              <div class="progress-ring" id="progress-ring" style="--progress: 0deg">
+                <div class="progress-ring-inner"><strong id="progress-percent">0%</strong><span>виконано</span></div>
+              </div>
+              <div class="progress-details">
+                <strong class="progress-title">Кожен крок має значення</strong>
+                <p>Продовжуй рухатися до своїх цілей. Твій прогрес оновлюється автоматично.</p>
+                <div class="progress-legend"><span><i class="legend-dot completed-dot"></i> Виконано <b id="legend-completed">0</b></span><span><i class="legend-dot active-dot"></i> Залишилося <b id="legend-remaining">0</b></span></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel focus-panel">
+            <div class="focus-top"><span class="focus-icon"><i data-lucide="target"></i></span><span class="focus-tag">ФОКУС ДНЯ</span></div>
+            <h2>Маленькі кроки —<br><span>великі результати.</span></h2>
+            <p>Обери найважливіше завдання та приділи йому час сьогодні.</p>
+            <div class="focus-bottom"><span><i data-lucide="sparkles"></i> Ти впораєшся!</span><span class="focus-shape">✳</span></div>
+          </article>
+        </section>
+
+        <!-- Завдання на поточний день -->
+        <section class="panel today-panel">
+          <div class="panel-heading today-heading">
+            <div><div class="title-with-icon"><h2>Завдання на сьогодні</h2><span class="today-count" id="today-count">0</span></div><p>Тримай важливе під контролем</p></div>
+            <button class="text-button" id="view-all-button">Усі завдання <i data-lucide="arrow-up-right"></i></button>
+          </div>
+          <div class="task-list" id="today-task-list">
+            <!-- Список завдань створюється JavaScript -->
+          </div>
+          <div class="empty-state" id="empty-state">
+            <span class="empty-icon"><i data-lucide="coffee"></i></span>
+            <strong>На сьогодні завдань немає</strong>
+            <p>Можеш відпочити або додати нове завдання.</p>
+            <button class="secondary-button" id="empty-add-button"><i data-lucide="plus"></i> Додати завдання</button>
+          </div>
+        </section>
+
+
+        </div>
+
+        <!-- Сторінка всіх завдань -->
+        <section class="tasks-page" id="tasks-page" hidden>
+          <div class="welcome-row tasks-page-heading">
+            <div>
+              <p class="eyebrow">WORKSPACE / TASKS</p>
+              <h1>Мої завдання</h1>
+              <p class="welcome-subtitle">Керуй усіма своїми справами в одному місці.</p>
+            </div>
+            <button class="primary-button" id="tasks-new-button" type="button"><i data-lucide="plus"></i> Нове завдання</button>
+          </div>
+
+          <section class="tasks-toolbar panel">
+            <label class="tasks-search">
+              <i data-lucide="search"></i>
+              <input id="tasks-search" type="search" placeholder="Пошук завдань..." aria-label="Пошук завдань">
+            </label>
+            <select class="tasks-filter" id="tasks-status-filter" aria-label="Фільтр за статусом">
+              <option value="all">Усі статуси</option>
+              <option value="planned">Заплановані</option>
+              <option value="in-progress">У процесі</option>
+              <option value="review">На перевірці</option>
+              <option value="completed">Виконані</option>
+              <option value="favorite">Обрані</option>
+            </select>
+            <select class="tasks-filter" id="tasks-category-filter" aria-label="Фільтр за категорією">
+              <option value="all">Усі категорії</option>
+              <option value="Навчання">Навчання</option>
+              <option value="Робота">Робота</option>
+              <option value="Особисте">Особисте</option>
+              <option value="Покупки">Покупки</option>
+              <option value="Інше">Інше</option>
+            </select>
+          </section>
+
+          <section class="panel all-tasks-panel">
+            <div class="panel-heading all-tasks-heading">
+              <div>
+                <div class="title-with-icon"><h2>Список завдань</h2><span class="today-count" id="all-tasks-count">0</span></div>
+                <p id="all-tasks-subtitle">Усі завдання у твоєму просторі</p>
+              </div>
+              <span class="tasks-sort-label"><i data-lucide="list-filter"></i> За датою</span>
+            </div>
+            <div class="task-list all-task-list" id="all-task-list"></div>
+            <div class="tasks-empty" id="tasks-empty">
+              <span class="empty-icon"><i data-lucide="search-x"></i></span>
+              <strong>Завдань не знайдено</strong>
+              <p>Спробуй змінити фільтри або створи нове завдання.</p>
+            </div>
+          </section>
+        </section>
+
+
+        <!-- Сторінка календаря -->
+        <section class="workspace-page calendar-page" id="calendar-page" hidden>
+          <div class="welcome-row page-heading">
+            <div>
+              <p class="eyebrow">WORKSPACE / CALENDAR</p>
+              <h1>Календар</h1>
+              <p class="welcome-subtitle">Переглядай завдання за датами та плануй свій час.</p>
+            </div>
+            <button class="primary-button" id="calendar-new-task" type="button"><i data-lucide="plus"></i> Нове завдання</button>
+          </div>
+
+          <section class="calendar-layout">
+            <div class="panel calendar-panel">
+              <div class="calendar-toolbar">
+                <div>
+                  <h2 id="calendar-month-title">Місяць 2026</h2>
+                  <p>Обери день, щоб переглянути заплановане</p>
+                </div>
+                <div class="calendar-navigation">
+                  <div class="calendar-view-switch" role="group" aria-label="Режим календаря">
+                    <button class="calendar-view-button active" type="button" data-calendar-view="month">Місяць</button>
+                    <button class="calendar-view-button" type="button" data-calendar-view="week">Тиждень</button>
+                    <button class="calendar-view-button" type="button" data-calendar-view="day">День</button>
+                  </div>
+                  <div class="calendar-date-controls">
+                    <button class="icon-button" id="calendar-prev" type="button" aria-label="Попередній період"><i data-lucide="chevron-left"></i></button>
+                    <button class="secondary-button calendar-today-button" id="calendar-today" type="button">Сьогодні</button>
+                    <button class="icon-button" id="calendar-next" type="button" aria-label="Наступний період"><i data-lucide="chevron-right"></i></button>
+                  </div>
+                </div>
+              </div>
+              <div class="calendar-weekdays">
+                <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Нд</span>
+              </div>
+              <div class="calendar-grid" id="calendar-grid"></div>
+              <div class="calendar-legend">
+                <span><i class="legend-dot active-dot"></i> Є завдання</span>
+                <span><i class="legend-dot completed-dot"></i> Виконано</span>
+              </div>
+            </div>
+
+            <aside class="panel calendar-day-panel">
+              <div class="panel-heading">
+                <div><h2 id="calendar-selected-title">Завдання на день</h2><p id="calendar-selected-subtitle">Обрана дата</p></div>
+                <span class="today-count" id="calendar-day-count">0</span>
+              </div>
+              <div class="calendar-day-list" id="calendar-day-list"></div>
+              <div class="calendar-day-empty" id="calendar-day-empty">На цю дату завдань немає.</div>
+            </aside>
+          </section>
+        </section>
+
+        <!-- Сторінка Kanban -->
+        <section class="workspace-page kanban-page" id="kanban-page" hidden>
+          <div class="welcome-row page-heading">
+            <div>
+              <p class="eyebrow">WORKSPACE / BOARD</p>
+              <h1>Kanban</h1>
+              <p class="welcome-subtitle">Перетягуй картки між колонками, щоб змінювати статус завдань.</p>
+            </div>
+            <button class="primary-button" id="kanban-new-task" type="button"><i data-lucide="plus"></i> Нове завдання</button>
+          </div>
+
+          <div class="kanban-board">
+            <section class="kanban-column" data-status="planned">
+              <div class="kanban-column-heading"><span class="kanban-status-dot planned-dot"></span><h2>Заплановано</h2><span class="kanban-column-count" id="kanban-count-planned">0</span></div>
+              <div class="kanban-dropzone" id="kanban-planned" data-status="planned"></div>
+            </section>
+            <section class="kanban-column" data-status="in-progress">
+              <div class="kanban-column-heading"><span class="kanban-status-dot progress-dot"></span><h2>У процесі</h2><span class="kanban-column-count" id="kanban-count-in-progress">0</span></div>
+              <div class="kanban-dropzone" id="kanban-in-progress" data-status="in-progress"></div>
+            </section>
+            <section class="kanban-column" data-status="review">
+              <div class="kanban-column-heading"><span class="kanban-status-dot review-dot"></span><h2>На перевірці</h2><span class="kanban-column-count" id="kanban-count-review">0</span></div>
+              <div class="kanban-dropzone" id="kanban-review" data-status="review"></div>
+            </section>
+            <section class="kanban-column" data-status="completed">
+              <div class="kanban-column-heading"><span class="kanban-status-dot done-dot"></span><h2>Виконано</h2><span class="kanban-column-count" id="kanban-count-completed">0</span></div>
+              <div class="kanban-dropzone" id="kanban-completed" data-status="completed"></div>
+            </section>
+          </div>
+          <p class="kanban-hint"><i data-lucide="info"></i> Щоб змінити статус, перетягни картку в іншу колонку.</p>
+        </section>
+
+        <!-- Сторінка статистики -->
+        <section class="workspace-page analytics-page" id="statistics-page" hidden>
+          <div class="welcome-row page-heading">
+            <div><p class="eyebrow">ANALYZE / OVERVIEW</p><h1>Статистика</h1><p class="welcome-subtitle">Відстежуй виконання завдань і власну продуктивність.</p></div>
+          </div>
+          <section class="analytics-summary">
+            <article class="panel analytics-metric"><span class="analytics-metric-icon purple"><i data-lucide="list-checks"></i></span><small>Усього завдань</small><strong id="analytics-total">0</strong><span>У твоєму просторі</span></article>
+            <article class="panel analytics-metric"><span class="analytics-metric-icon green"><i data-lucide="check-circle-2"></i></span><small>Виконано</small><strong id="analytics-completed">0</strong><span id="analytics-completion-rate">0% від усіх завдань</span></article>
+            <article class="panel analytics-metric"><span class="analytics-metric-icon blue"><i data-lucide="timer"></i></span><small>Фокус-час</small><strong id="analytics-focus-time">0 хв</strong><span>Накопичено хвилин фокусу</span></article>
+            <article class="panel analytics-metric"><span class="analytics-metric-icon orange"><i data-lucide="flame"></i></span><small>Сесії сьогодні</small><strong id="analytics-today-sessions">0</strong><span>Завершені фокус-сесії</span></article>
+          </section>
+          <section class="analytics-grid">
+            <article class="panel analytics-panel"><div class="panel-heading"><div><h2>Завдання за статусами</h2><p>Поточний розподіл</p></div></div><div id="status-chart" class="horizontal-chart"></div></article>
+            <article class="panel analytics-panel"><div class="panel-heading"><div><h2>Категорії</h2><p>Кількість завдань у кожній категорії</p></div></div><div id="category-chart" class="horizontal-chart"></div></article>
+            <article class="panel analytics-panel analytics-week-panel"><div class="panel-heading"><div><h2>Фокус за останні 7 днів</h2><p>Хвилини завершених Pomodoro-сесій</p></div></div><div id="focus-week-chart" class="week-chart"></div></article>
+          </section>
+        </section>
+
+        <!-- Сторінка Pomodoro -->
+        <section class="workspace-page pomodoro-page" id="pomodoro-page" hidden>
+          <div class="welcome-row page-heading">
+            <div><p class="eyebrow">FOCUS / POMODORO</p><h1>Pomodoro</h1><p class="welcome-subtitle">Працюй короткими зосередженими інтервалами та вчасно відпочивай.</p></div>
+          </div>
+          <section class="pomodoro-layout">
+            <article class="panel pomodoro-main-panel">
+              <div class="pomodoro-mode-switch" role="group" aria-label="Режим таймера">
+                <button class="pomodoro-mode active" type="button" data-pomodoro-mode="focus">Фокус</button>
+                <button class="pomodoro-mode" type="button" data-pomodoro-mode="short">Коротка перерва</button>
+                <button class="pomodoro-mode" type="button" data-pomodoro-mode="long">Довга перерва</button>
+              </div>
+              <div class="pomodoro-clock-wrap"><div class="pomodoro-clock-ring" id="pomodoro-ring"><div class="pomodoro-clock-face"><strong id="pomodoro-time">25:00</strong><span id="pomodoro-mode-label">Час зосередитися</span></div></div></div>
+              <div class="pomodoro-controls"><button class="primary-button pomodoro-start" id="pomodoro-start" type="button"><i data-lucide="play"></i> Почати</button><button class="secondary-button" id="pomodoro-reset" type="button"><i data-lucide="rotate-ccw"></i> Скинути</button></div>
+              <p class="pomodoro-hint" id="pomodoro-hint">Після фокус-сесії почнеться коротка перерва.</p>
+            </article>
+            <aside class="pomodoro-side">
+              <article class="panel pomodoro-task-panel"><div class="panel-heading"><div><h2>Завдання для фокусу</h2><p>Необов'язково</p></div><i data-lucide="target"></i></div><select class="form-input" id="pomodoro-task"><option value="">Без конкретного завдання</option></select></article>
+              <article class="panel pomodoro-stats-panel"><h2>Сьогодні</h2><div class="pomodoro-stat-line"><span>Завершено сесій</span><strong id="pomodoro-sessions-today">0</strong></div><div class="pomodoro-stat-line"><span>Час фокусу</span><strong id="pomodoro-focus-today">0 хв</strong></div><div class="pomodoro-stat-line"><span>Усього сесій</span><strong id="pomodoro-sessions-total">0</strong></div></article>
+              <article class="pomodoro-tip"><i data-lucide="lightbulb"></i><p><strong>Порада</strong> Прибери зайві вкладки та сповіщення, щоб зосередитися на одному завданні.</p></article>
+            </aside>
+          </section>
+        </section>
+
+        <!-- Сторінка керування категоріями -->
+        <section class="workspace-page categories-page" id="categories-page" hidden>
+          <div class="welcome-row page-heading">
+            <div><p class="eyebrow">PERSONAL / CATEGORIES</p><h1>Категорії</h1><p class="welcome-subtitle">Створюй власні категорії та впорядковуй завдання за напрямами.</p></div>
+          </div>
+          <section class="category-overview-stats" aria-label="Огляд категорій">
+            <article class="panel category-overview-stat"><span class="category-overview-icon"><i data-lucide="tags"></i></span><div><small>Усього категорій</small><strong id="category-total-count">0</strong></div></article>
+            <article class="panel category-overview-stat"><span class="category-overview-icon"><i data-lucide="list-checks"></i></span><div><small>Завдань у категоріях</small><strong id="category-task-total">0</strong></div></article>
+            <article class="panel category-overview-stat"><span class="category-overview-icon"><i data-lucide="trending-up"></i></span><div><small>Найпопулярніша</small><strong id="category-most-used">—</strong></div></article>
+          </section>
+          <section class="category-cards-section">
+            <div class="category-section-heading"><div><h2>Мої напрями</h2><p>Обери категорію, щоб переглянути пов’язані завдання.</p></div></div>
+            <div class="category-cards-grid" id="category-cards-grid"></div>
+          </section>
+          <section class="categories-layout">
+            <article class="panel category-editor-panel">
+              <div class="panel-heading"><div><h2 id="category-form-title">Нова категорія</h2><p>Назва та колір допоможуть швидко знаходити потрібні завдання.</p></div><i data-lucide="tag"></i></div>
+              <form id="category-form" class="category-form">
+                <input type="hidden" id="category-id">
+                <label class="form-label" for="category-name">Назва категорії</label>
+                <input class="form-input" id="category-name" type="text" maxlength="24" placeholder="Наприклад, Навчання" required>
+                <label class="form-label" for="category-color">Колір категорії</label>
+                <div class="category-color-row"><input id="category-color" type="color" value="#8a82ff" aria-label="Колір категорії"><span>Обери колір для позначки категорії</span></div>
+                <div class="category-form-actions"><button class="secondary-button" id="category-cancel-edit" type="button" hidden>Скасувати</button><button class="primary-button" type="submit"><i data-lucide="plus"></i><span id="category-submit-label">Додати категорію</span></button></div>
+              </form>
+            </article>
+            <article class="panel category-list-panel">
+              <div class="panel-heading"><div><h2>Мої категорії</h2><p id="categories-count">0 категорій</p></div><i data-lucide="layers"></i></div>
+              <div class="category-management-list" id="category-management-list"></div>
+            </article>
+          </section>
+          <p class="category-help"><i data-lucide="info"></i> Якщо видалити категорію, її завдання автоматично перейдуть у категорію «Інше».</p>
+        </section>
+
+        <!-- Сторінка профілю -->
+        <section class="workspace-page profile-page" id="profile-page" hidden>
+          <div class="welcome-row page-heading">
+            <div><p class="eyebrow">PERSONAL / PROFILE</p><h1>Мій профіль</h1><p class="welcome-subtitle">Керуй інформацією, яка відображається у твоєму просторі TaskFlow.</p></div>
+          </div>
+          <section class="panel auth-panel" id="auth-panel">
+            <div class="panel-heading"><div><h2 id="auth-title">Увійти в TaskFlow</h2><p id="auth-subtitle">Увійди, щоб використовувати особистий профіль.</p></div><i data-lucide="shield-check"></i></div>
+            <div class="auth-mode-switch">
+              <button class="auth-mode-button active" id="auth-mode-login" type="button">Вхід</button>
+              <button class="auth-mode-button" id="auth-mode-register" type="button">Реєстрація</button>
+            </div>
+            <form id="auth-form" class="auth-form">
+              <label class="form-label" for="auth-name" id="auth-name-label" hidden>Ім'я</label>
+              <input class="form-input" id="auth-name" type="text" maxlength="32" placeholder="Твоє ім'я" autocomplete="name" hidden>
+              <label class="form-label" for="auth-email">Електронна пошта</label>
+              <input class="form-input" id="auth-email" type="email" placeholder="name@example.com" autocomplete="email" required>
+              <label class="form-label" for="auth-password">Пароль</label>
+              <input class="form-input" id="auth-password" type="password" minlength="6" placeholder="Мінімум 6 символів" autocomplete="current-password" required>
+              <p class="auth-error" id="auth-error" role="alert" hidden></p>
+              <button class="primary-button auth-submit-button" id="auth-submit" type="submit">Увійти</button>
+            </form>
+            <div class="auth-divider"><span>або</span></div>
+            <button class="secondary-button auth-google-button" id="google-sign-in" type="button"><span class="google-g" aria-hidden="true">G</span> Продовжити з Google</button>
+          </section>
+          <section class="profile-layout" id="profile-layout" hidden>
+            <article class="panel profile-preview-panel">
+              <div class="profile-cover"></div>
+              <div class="profile-preview-content">
+                <div class="profile-large-avatar" id="profile-large-avatar">О</div>
+                <h2 id="profile-preview-name">Олександр</h2>
+                <p id="profile-preview-about">Особистий простір у TaskFlow</p>
+                <div class="profile-joined"><i data-lucide="calendar-days"></i><span>Акаунт TaskFlow</span></div>
+              </div>
+            </article>
+            <article class="panel profile-edit-panel">
+              <div class="panel-heading"><div><h2>Інформація профілю</h2><p>Додаткова інформація профілю</p></div><i data-lucide="user-round-pen"></i></div>
+              <section class="account-link-panel">
+                <h3>Способи входу</h3>
+                <p id="link-email-status" class="account-link-status" role="status" hidden></p>
+                <form id="link-email-form" class="account-link-form" hidden>
+                  <label class="form-label" for="link-email">Пошта Google</label>
+                  <input class="form-input" id="link-email" type="email" autocomplete="email" readonly required>
+                  <label class="form-label" for="link-password">Створи окремий пароль</label>
+                  <input class="form-input" id="link-password" type="password" minlength="6" autocomplete="new-password" placeholder="Мінімум 6 символів" required>
+                  <button class="secondary-button" id="link-email-submit" type="submit">Прив’язати email і пароль</button>
+                </form>
+              </section>
+              <form id="profile-form" class="profile-form">
+                <label class="form-label" for="profile-name">Ім'я</label>
+                <input class="form-input" id="profile-name" type="text" maxlength="32" placeholder="Як до тебе звертатися" required>
+                <label class="form-label" for="profile-about">Про себе <small>Необов'язково</small></label>
+                <textarea class="form-input form-textarea" id="profile-about" rows="3" maxlength="140" placeholder="Короткий опис... "></textarea>
+                <div class="avatar-upload-row">
+                  <div><strong>Фото профілю</strong><small>PNG, JPG або WEBP · до 2 МБ</small></div>
+                  <label class="secondary-button upload-avatar-button" for="profile-avatar-file"><i data-lucide="image-plus"></i> Обрати фото</label>
+                  <input id="profile-avatar-file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+                </div>
+                <div class="profile-form-actions"><button class="secondary-button" id="profile-remove-avatar" type="button">Прибрати фото</button><button class="primary-button" type="submit"><i data-lucide="save"></i> Зберегти профіль</button></div>
+                <button class="secondary-button auth-sign-out-button" id="sign-out-button" type="button"><i data-lucide="log-out"></i> Вийти з акаунта</button>
+              </form>
+            </article>
+          </section>
+        </section>
+
+        <!-- Сторінка налаштувань -->
+        <section class="workspace-page settings-page" id="settings-page" hidden>
+          <div class="welcome-row page-heading">
+            <div><p class="eyebrow">PERSONAL / SETTINGS</p><h1>Налаштування</h1><p class="welcome-subtitle">Налаштуй вигляд TaskFlow та тривалість фокус-сесій.</p></div>
+          </div>
+          <section class="settings-list">
+            <article class="panel settings-card">
+              <div class="settings-card-heading"><span class="settings-icon"><i data-lucide="palette"></i></span><div><h2>Зовнішній вигляд</h2><p>Вибери тему інтерфейсу</p></div></div>
+              <label class="settings-field" for="settings-theme"><span><strong>Тема оформлення</strong><small>Можна перемикати у верхній панелі</small></span><select class="form-input settings-select" id="settings-theme"><option value="light">Світла</option><option value="dark">Темна</option><option value="system">Системна</option></select></label>
+              <label class="settings-field" for="settings-accent"><span><strong>Акцентний колір</strong><small>Колір кнопок та виділення</small></span><input id="settings-accent" type="color" value="#7667f8"></label>
+              <label class="settings-field" for="settings-language"><span><strong>Мова інтерфейсу</strong><small>Мова основних підписів</small></span><select class="form-input settings-select" id="settings-language"><option value="uk">Українська</option><option value="en">English</option></select></label>
+            </article>
+            <article class="panel settings-card">
+              <div class="settings-card-heading"><span class="settings-icon"><i data-lucide="timer"></i></span><div><h2>Pomodoro</h2><p>Задай тривалість кожного режиму у хвилинах</p></div></div>
+              <form id="pomodoro-settings-form" class="pomodoro-settings-form">
+                <label class="settings-field" for="setting-focus-minutes"><span><strong>Фокус</strong><small>Робочий інтервал</small></span><input class="form-input settings-number" id="setting-focus-minutes" type="number" min="1" max="90" required></label>
+                <label class="settings-field" for="setting-short-minutes"><span><strong>Коротка перерва</strong><small>Після фокус-сесії</small></span><input class="form-input settings-number" id="setting-short-minutes" type="number" min="1" max="30" required></label>
+                <label class="settings-field" for="setting-long-minutes"><span><strong>Довга перерва</strong><small>Після кожних чотирьох фокус-сесій</small></span><input class="form-input settings-number" id="setting-long-minutes" type="number" min="1" max="60" required></label>
+                <div class="settings-actions"><button class="primary-button" type="submit"><i data-lucide="save"></i> Зберегти налаштування</button></div>
+              </form>
+            </article>
+            <article class="panel settings-card">
+              <div class="settings-card-heading"><span class="settings-icon"><i data-lucide="bell-ring"></i></span><div><h2>Сповіщення</h2><p>Налаштуй нагадування та їхній вигляд</p></div></div>
+              <label class="settings-field"><span><strong>Нагадування у браузері</strong><small>Системні повідомлення про дедлайни</small></span><input type="checkbox" id="setting-browser-notifications"></label>
+              <label class="settings-field"><span><strong>Звук сповіщень</strong><small>Звуковий сигнал у застосунку</small></span><input type="checkbox" id="setting-notification-sound"></label>
+              <label class="settings-field" for="setting-reminder-time"><span><strong>Нагадувати заздалегідь</strong><small>Час до дедлайну</small></span><select class="form-input settings-select" id="setting-reminder-time"><option value="0">У день дедлайну</option><option value="1">За 1 день</option><option value="2">За 2 дні</option><option value="7">За тиждень</option></select></label>
+              <div class="settings-actions"><button class="secondary-button" id="export-json" type="button">Експорт JSON</button><button class="secondary-button" id="export-csv" type="button">Експорт CSV</button></div>
+              <div class="settings-actions"><button class="danger-button" id="delete-all-tasks" type="button">Видалити всі завдання</button></div>
+            </article>
+            <article class="panel settings-card">
+              <div class="settings-card-heading"><span class="settings-icon"><i data-lucide="trophy"></i></span><div><h2>Прогрес та інструменти</h2><p>Додаткові можливості робочого простору</p></div></div>
+              <p id="taskflow-streak">Streak: 0 днів · Досягнення: 0</p>
+              <label class="settings-field" for="quick-note"><span><strong>Швидка нотатка</strong><small>Збережеться у цьому браузері</small></span><textarea class="form-input" id="quick-note" rows="2" placeholder="Запиши думку..."></textarea></label>
+              <div class="settings-actions"><button class="secondary-button" id="save-quick-note" type="button">Зберегти нотатку</button><button class="secondary-button" id="show-quick-notes" type="button">Мої нотатки</button><button class="secondary-button" id="restore-trash" type="button"><i data-lucide="trash-2"></i> Кошик <span id="trash-count">0</span></button></div>
+              <div id="quick-notes-list"></div>
+            </article>
+            <article class="panel settings-note"><i data-lucide="shield-check"></i><p><strong>Зберігання даних</strong><br>Завдання, категорії, профіль і налаштування синхронізуються через Cloud Firestore після входу. Тема та акцентний колір зберігаються локально.</p></article>
+          </section>
+        </section>
+
+        <footer class="page-footer"><span>© 2026 TaskFlow</span><span>Створено для продуктивних днів <i data-lucide="heart"></i></span></footer>
+      </div>
+    </main>
+  </div>
+
+  <!-- Затемнення фону для мобільного меню -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <!-- Модальне вікно створення / редагування завдання -->
+  <div class="modal-backdrop" id="task-modal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header"><div><span class="modal-eyebrow">TASKFLOW / TASK</span><h2 id="modal-title">Нове завдання</h2><p class="modal-subtitle">Заповни основну інформацію, щоб не забути про важливу справу</p></div><button class="icon-button" id="close-modal-button" aria-label="Закрити"><i data-lucide="x"></i></button></div>
+      <form id="task-form">
+        <input type="hidden" id="task-id">
+        <label class="form-label" for="task-title">Назва завдання <span>*</span></label>
+        <input class="form-input" id="task-title" type="text" maxlength="90" placeholder="Наприклад: підготувати презентацію" required>
+        <label class="form-label" for="task-description">Опис <small>Необов'язково</small></label>
+        <textarea class="form-input form-textarea" id="task-description" rows="3" maxlength="300" placeholder="Коротко опиши, що потрібно зробити..."></textarea>
+        <div class="form-row">
+          <div><label class="form-label" for="task-date">Дедлайн <span>*</span></label><input class="form-input" id="task-date" type="date" required></div>
+          <div><label class="form-label" for="task-time">Час <small>Необов'язково</small></label><input class="form-input" id="task-time" type="time"></div>
+        </div>
+        <div class="form-row">
+          <div><label class="form-label" for="task-category">Категорія</label><select class="form-input" id="task-category"><option value="Навчання">Навчання</option><option value="Робота">Робота</option><option value="Особисте">Особисте</option><option value="Покупки">Покупки</option><option value="Інше">Інше</option></select></div>
+          <div><label class="form-label" for="task-priority">Пріоритет</label><select class="form-input" id="task-priority"><option value="low">Низький</option><option value="medium" selected>Середній</option><option value="high">Високий</option></select></div>
+        </div>
+        <label class="form-label" for="task-subtasks">Підзавдання <small>Кожен рядок — окремий пункт</small></label>
+        <textarea class="form-input form-textarea" id="task-subtasks" rows="2" placeholder="Прочитати матеріал&#10;Зробити конспект"></textarea>
+        <label class="settings-field" for="task-repeat"><span><strong>Повторюване завдання</strong><small>Автоматично створювати наступне після виконання</small></span><select class="form-input settings-select" id="task-repeat"><option value="none">Не повторювати</option><option value="daily">Щодня</option><option value="weekly">Щотижня</option><option value="monthly">Щомісяця</option></select></label>
+        <div class="modal-actions"><button class="secondary-button" type="button" id="cancel-modal-button">Скасувати</button><button class="primary-button" type="submit"><i data-lucide="check"></i> Зберегти завдання</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Кошик із можливістю відновлення та остаточного видалення -->
+  <div class="modal-backdrop" id="trash-modal" aria-hidden="true">
+    <section class="modal trash-modal" role="dialog" aria-modal="true" aria-labelledby="trash-title">
+      <div class="modal-header">
+        <div><span class="modal-eyebrow">TASKFLOW / TRASH</span><h2 id="trash-title">Кошик</h2><p class="modal-subtitle" id="trash-summary">Видалені завдання можна відновити.</p></div>
+        <button class="icon-button" id="close-trash-modal" type="button" aria-label="Закрити"><i data-lucide="x"></i></button>
+      </div>
+      <div class="trash-list" id="trash-list"></div>
+      <div class="modal-actions trash-actions">
+        <button class="danger-button" id="empty-trash" type="button">Очистити кошик</button>
+        <button class="secondary-button" id="close-trash-bottom" type="button">Закрити</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Власне вікно підтвердження дії замість стандартного діалогу браузера -->
+  <div class="confirm-backdrop" id="confirm-modal" aria-hidden="true">
+    <section class="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+      <div class="confirm-icon"><i data-lucide="alert-triangle"></i></div>
+      <h2 id="confirm-title">Підтвердження дії</h2>
+      <p id="confirm-message">Ви впевнені, що хочете продовжити?</p>
+      <div class="confirm-actions">
+        <button class="secondary-button" type="button" id="confirm-cancel">Скасувати</button>
+        <button class="danger-button" type="button" id="confirm-accept">Видалити</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Невелике спливаюче повідомлення -->
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/app.js"></script>
+  <script type="module" src="js/firebase-auth.js"></script>
+  <script type="module" src="js/firebase-firestore.js"></script>
+</body>
+</html>
